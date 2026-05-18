@@ -14,6 +14,7 @@ def total_discharge(model, t):
 
 # Soc chronology rule
 def soc_rule(model, t):
+    # Battery assumed to be at zero charge at t==0
     if t == 0:
         return model.soc[t] == 0 + model.dt*(total_charge(model, t) - total_discharge(model, t))
     return model.soc[t] == model.soc[t-1] + model.dt*(total_charge(model, t) - total_discharge(model, t))
@@ -41,9 +42,9 @@ def lin_discharge_limit_rule(model, t):
 def add_market_commitment_constraints(model):
     model.market_commitment_constraints = ConstraintList()
 
-    for m_name in model.M:
+    for m in model.M:
 
-        steps_in_interval = int((model.market_interval.seconds/3600) / model.dt)
+        steps_in_interval = int(model.market_interval[m] / model.dt)
 
         if steps_in_interval == 1:
             continue
@@ -55,8 +56,8 @@ def add_market_commitment_constraints(model):
             for k in range(1, steps_in_interval):
                 if (t + k) not in model.T:
                     continue
-                model.market_commitment_constraints.add(model.c[m_name, t+k] == model.c[m_name, t])
-                model.market_commitment_constraints.add(model.d[m_name, t+k] == model.d[m_name, t])
+                model.market_commitment_constraints.add(model.c[m, t+k] == model.c[m, t])
+                model.market_commitment_constraints.add(model.d[m, t+k] == model.d[m, t])
 
     return model.market_commitment_constraints
 
@@ -65,6 +66,6 @@ def add_market_commitment_constraints(model):
 #==============================================================================
 
 def simple_arb_obj(model):
-    return sum(model.price_lookup[m,t] * model.dt * (model.d[m, t] - model.c[m, t])
+    return sum(model.price[m,t] * model.dt * (model.d[m, t] - model.c[m, t])
         for m in model.M
         for t in model.T)

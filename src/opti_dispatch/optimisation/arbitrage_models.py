@@ -28,7 +28,7 @@ def build_MILP_arb_model(markets: list[Market], battery: BatterySpec, n_timestep
     # Decision variables
     model.c = Var(model.M, model.T, domain=NonNegativeReals, bounds=(0, battery.max_charge_rate))
     model.d = Var(model.M, model.T, domain=NonNegativeReals, bounds=(0, battery.max_discharge_rate))
-    model.soc = Var(model.T, domain=NonNegativeReals, bounds=(0,battery.capacity), initialize=0) # Battery initialised to 0 charge
+    model.soc = Var(model.T, domain=NonNegativeReals, bounds=(0,battery.capacity))
     model.z = Var(model.T, domain=Binary) # 1 = charging, 0 = discharging
 
     # Battery params
