@@ -1,12 +1,12 @@
 import pandas as pd
-from dataclasses import dataclass
+from pyomo.environ import SolverFactory, value
+
 from opti_dispatch.battery import BatterySpec
-from opti_dispatch.markets import Market, align_market_freqs
-import math
+from opti_dispatch.markets import Market
+from opti_dispatch.optimisation.arbitrage_models import build_MILP_arb_model, build_linear_arb_model
 
-battery = BatterySpec(2, 2, 4)
 
-battery_info = pd.read_csv('data/battery_spec.csv')
+battery = BatterySpec.from_csv('data/battery_spec.csv')
 
 market1_ts = pd.read_csv('data/market1_data.csv', index_col="Time")
 market1_ts.index = pd.to_datetime(market1_ts.index, dayfirst=True)
@@ -14,12 +14,28 @@ market1_ts.index = pd.to_datetime(market1_ts.index, dayfirst=True)
 market1_UTC_index = pd.date_range(start=market1_ts.index[0], end=market1_ts.index[-1], freq="30min")
 assert len(market1_UTC_index) == len(market1_ts.index)
 market1_ts.index = market1_UTC_index
-m1 = Market(name="M1", prices=market1_ts, market_freq = pd.Timedelta("30min"))
+m1 = Market(name="M1", prices=market1_ts, interval = pd.Timedelta("30min"))
 
 market2_ts = pd.read_csv('data/market2_data.csv', index_col="Time").dropna()
 market2_ts.index = pd.to_datetime(market2_ts.index, dayfirst=True)
-m2 = Market(name="M2", prices = market2_ts, market_freq = pd.Timedelta("1h"))
+m2 = Market(name="M2", prices = market2_ts, interval = pd.Timedelta("1h"))
 
 # Align market frequencies for MILP DVs
-markets = align_market_freqs([m1,m2])
+markets = [m1,m2]
 
+# Limit number of timesteps to solve for to allow quick local runs
+n_timesteps = 1000
+arb_model = build_MILP_arb_model(markets=markets, battery=battery, n_timesteps=n_timesteps)
+
+solver = SolverFactory("highs")
+results = solver.solve(arb_model)
+
+results_df = pd.DataFrame(index=markets[0].prices.index, data={
+    "soc":[value(arb_model.soc[t]) for t in arb_model.T],
+    "c30":[value(arb_model.c[markets[0].name, t]) for t in arb_model.T],
+    "d30":[-1*value(arb_model.d[markets[0].name, t]) for t in arb_model.T],
+    "c60":[value(arb_model.c[markets[1].name, t]) for t in arb_model.T],
+    "d60":[-1*value(arb_model.d[markets[1].name, t]) for t in arb_model.T],
+})
+
+results_df.tail(100).plot()
