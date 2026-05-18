@@ -24,13 +24,14 @@ m2 = Market(name="M2", prices = market2_ts, interval = pd.Timedelta("1h"))
 markets = [m1,m2]
 
 # Limit number of timesteps to solve for to allow quick local runs
-n_timesteps = 1000
-arb_model = build_MILP_arb_model(markets=markets, battery=battery, n_timesteps=n_timesteps)
+t_start = pd.Timestamp("2020-11-1")
+t_end = pd.Timestamp("2020-12-1")
+arb_model = build_MILP_arb_model(markets=markets, battery=battery, t_start=t_start, t_end=t_end)
 
 solver = SolverFactory("highs")
 results = solver.solve(arb_model)
 
-results_df = pd.DataFrame(index=markets[0].prices.index, data={
+results_df = pd.DataFrame(index=markets[0].prices.loc[t_start:t_end].index, data={
     "soc":[value(arb_model.soc[t]) for t in arb_model.T],
     "c30":[value(arb_model.c[markets[0].name, t]) for t in arb_model.T],
     "d30":[-1*value(arb_model.d[markets[0].name, t]) for t in arb_model.T],

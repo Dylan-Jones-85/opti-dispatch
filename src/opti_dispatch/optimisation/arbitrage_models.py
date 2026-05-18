@@ -4,7 +4,7 @@ from opti_dispatch.markets import Market, align_market_freqs
 from opti_dispatch.optimisation.rules import *
 
 
-def build_linear_arb_model(markets: list[Market], battery: BatterySpec, n_timesteps=None)->ConcreteModel:
+def build_linear_arb_model(markets: list[Market], battery: BatterySpec, t_start=None, t_end=None)->ConcreteModel:
     '''Simple battery arbitrage model which allows simultaneous charging and discharging,
     reducing the MILP problem to a LP one. For single markets, the linear model should
     produce the same result as the MILP model as simultaneous charge and discharge is
@@ -14,14 +14,19 @@ def build_linear_arb_model(markets: list[Market], battery: BatterySpec, n_timest
 
     model = ConcreteModel()
 
-    if n_timesteps is None:
-        n_timesteps = len(markets[0].prices)
+    if t_start is None:
+        t_start = markets[0].prices.index[0]
+    if t_end is None:
+        t_end = markets[0].prices.index[-1]
 
-    T = range(n_timesteps-1)
+    sliced_prices = {m.name: m.prices.loc[t_start:t_end] for m in markets}
+
+    T = range(len(sliced_prices[markets[0].name]))
+
     price_lookup = {
-    (m.name, t): m.prices.iloc[t, 0]
-    for m in markets
-    for t in T
+        (m.name, t): price
+        for m in markets
+        for t, price in enumerate(sliced_prices[m.name].values[:, 0])
     }
 
     # Index sets
@@ -55,11 +60,11 @@ def build_linear_arb_model(markets: list[Market], battery: BatterySpec, n_timest
     return model
 
 
-def build_MILP_arb_model(markets: list[Market], battery: BatterySpec, n_timesteps=None)->ConcreteModel:
+def build_MILP_arb_model(markets: list[Market], battery: BatterySpec,  t_start=None, t_end=None)->ConcreteModel:
     '''Simple battery arbitrage model with a binary variable, z, to explicitly
     prevent simultaneous charging and discharging across different markets.'''
 
-    model = build_linear_arb_model(markets, battery, n_timesteps)
+    model = build_linear_arb_model(markets, battery,  t_start, t_end)
     model.z = Var(model.T, domain=Binary) # 1 = charging, 0 = discharging
     
     model.del_component(model.charge_limit_constraint)
