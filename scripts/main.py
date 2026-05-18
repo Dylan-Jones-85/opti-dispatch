@@ -1,3 +1,4 @@
+'''Example script for using opti-dispatch with pyomo'''
 import pandas as pd
 from pyomo.environ import SolverFactory, value
 

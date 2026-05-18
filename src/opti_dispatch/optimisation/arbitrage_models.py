@@ -1,3 +1,4 @@
+'''Pre-configured pyomo model-building functions for battery arbitrage problems'''
 from pyomo.environ import *
 from opti_dispatch.battery import BatterySpec
 from opti_dispatch.markets import Market, align_market_freqs
