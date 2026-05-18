@@ -22,7 +22,8 @@ class Market:
     def upsample(self, freq: pd.Timedelta) -> "Market":
         resampled_prices = self.prices.resample(freq).ffill()
         return Market(name=self.name, prices=resampled_prices, interval=self.interval)
-    
+
+# Assumes market time series have same start and end time
 def align_market_freqs(markets: list[Market])->tuple[list[Market], pd.Timedelta]:
     freqs = [int(pd.Timedelta(m.interval).total_seconds()) for m in markets]
     # Highest common frequency = greatest common divisor

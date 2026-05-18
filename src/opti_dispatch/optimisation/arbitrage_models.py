@@ -89,7 +89,7 @@ def build_linear_arb_model(markets: list[Market], battery: BatterySpec, n_timest
     # Market params
     model.price = Param(model.M, model.T, initialize=price_lookup)
     model.dt = Param(initialize=dt)
-    model.market_interval = Param(model.M, initialize = [m.interval.seconds/3600 for m in markets])
+    model.market_interval = Param(model.M, initialize = {m.name: m.interval.seconds/3600 for m in markets})
 
     # Constraints
     model.soc_constraint = Constraint(model.T, rule=soc_rule)
