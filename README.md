@@ -12,6 +12,11 @@ cd opti-dispatch
 pip install -e .
 ```
 
+or for developers:
+```
+pip install -e ".[dev,solvers]"
+```
+
 ### Dependencies
 
 - `pandas`
