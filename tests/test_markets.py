@@ -62,7 +62,21 @@ def test_align_single_market_unchanged(m1):
     assert len(aligned[0].prices) == len(m1.prices)
 
 
+def test_align_same_market_unchanged(m1):
+    m1_copy = Market(m1.name,m1.prices.copy(deep=True),m1.interval)
+    aligned, freq = align_market_freqs([m1,m1_copy])
+    assert freq == pd.Timedelta("30min")
+    assert len(aligned[0].prices) == len(m1.prices)
+
+
 def test_align_upsamples_lower_freq_market(m1, m2):
     aligned, _ = align_market_freqs([m1, m2])
     # M2 should be upsampled to match M1's length
     assert len(aligned[0].prices) == len(aligned[1].prices)
+
+
+def test_align_multiple_markets(m1, m2, m3):
+    aligned, freq = align_market_freqs([m1, m2, m3])
+    assert freq == pd.Timedelta("15min")
+    assert len(aligned[0].prices) == len(aligned[2].prices)
+    assert len(aligned[1].prices) == len(aligned[2].prices)
