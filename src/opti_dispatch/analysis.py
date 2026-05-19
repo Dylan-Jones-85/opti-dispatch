@@ -3,6 +3,21 @@ import numpy as np
 from pyomo.environ import value
 
 
+def extract_results(model, time_index: pd.DatetimeIndex) -> pd.DataFrame:
+    data = {}
+
+    for m in model.M:
+        data[f"c_{m}"] = [value(model.c[m, t]) for t in model.T]
+        data[f"d_{m}"] = [-1*value(model.d[m, t]) for t in model.T]
+
+    data["soc"] = [value(model.soc[t]) for t in model.T]
+
+    if hasattr(model, "z"):
+        data["z"] = [value(model.z[t]) for t in model.T]
+
+    return pd.DataFrame(data, index=time_index)
+
+
 def compute_cashflow_trace(model, time_index: pd.DatetimeIndex) -> pd.DataFrame:
     """
     Returns a DataFrame of cumulative cashflows with one column per market,
