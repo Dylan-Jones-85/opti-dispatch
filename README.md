@@ -7,7 +7,7 @@ A Python package built around pyomo for optimising battery charge/discharge sche
 Clone the repository and install in editable mode:
 
 ```bash
-git clone <https://github.com/Dylan-Jones-85/opti-dispatch.git>
+git clone https://github.com/Dylan-Jones-85/opti-dispatch.git
 cd opti-dispatch
 pip install -e .
 ```
