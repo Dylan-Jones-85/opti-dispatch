@@ -1,7 +1,5 @@
 import pytest
-import tempfile
 import textwrap
-from pathlib import Path
 from opti_dispatch.battery import BatterySpec
 
 
