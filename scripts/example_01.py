@@ -27,14 +27,14 @@ markets = [m1,m2]
 print("Building arbitrage model...")
 ### (Un)Comment to run MILP solver for two markets
 # Limit number of timesteps to solve for to allow quick local runs
-# t_start = pd.Timestamp("2020-6-1")
-# t_end = pd.Timestamp("2020-12-1")
-# time_index = m1.prices.loc[t_start:t_end].index
-# arb_model = build_MILP_arb_model(markets=markets, battery=battery, t_start=t_start, t_end=t_end)
+t_start = pd.Timestamp("2020-11-1")
+t_end = pd.Timestamp("2020-12-1")
+time_index = m1.prices.loc[t_start:t_end].index
+arb_model = build_MILP_arb_model(markets=markets, battery=battery, t_start=t_start, t_end=t_end)
 
-### (Un)Comment to run linear solver for single market
-time_index = m1.prices.index
-arb_model = build_linear_arb_model(markets=[m1], battery=battery)
+# ### (Un)Comment to run linear solver for single market
+# time_index = m1.prices.index
+# arb_model = build_linear_arb_model(markets=[m1], battery=battery)
 
 print("Solving arbitrage model...")
 solver = SolverFactory("highs")
@@ -48,6 +48,7 @@ if results.solver.termination_condition == TerminationCondition.optimal:
 
     from opti_dispatch.analysis import extract_results, compute_cashflow_trace, check_simul_charge_and_discharge, check_capacity_limit, check_power_limits, compute_total_profit
     import numpy as np
+    import matplotlib.pyplot as plt
 
     simul_c_and_d_violation = any(check_simul_charge_and_discharge(arb_model))
     print(f"Simul charge and discharge check: {"FAILED" if simul_c_and_d_violation else "PASSED"}")
@@ -59,8 +60,10 @@ if results.solver.termination_condition == TerminationCondition.optimal:
     results_df = extract_results(arb_model, time_index)
     if "z" in results_df.columns:
         results_df.drop(columns="z").tail(100).plot()
+
     cashflow_df = compute_cashflow_trace(arb_model, time_index)
     cashflow_df.cumsum().plot(ylabel="Cumulative cashflow (£)")
+    plt.show()
 
     calced_optimal_value = cashflow_df['TOTAL'].cumsum().iloc[-1]
     model_optimal_value = value(arb_model.objective)
