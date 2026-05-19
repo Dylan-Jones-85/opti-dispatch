@@ -46,7 +46,7 @@ A CSV with `Name`, `Value`, `Units`, and `Description` columns. The following na
 
 ### Market price data
 
-The `Market` class is designed to hold a single pandas Series (datetime index) containing price data in `Currency/MWh`.
+The `Market` class is designed to hold a single pandas Series (datetime index) containing price data with units `Currency/MWh`.
 
 ---
 
