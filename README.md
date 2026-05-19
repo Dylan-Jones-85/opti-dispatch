@@ -55,6 +55,7 @@ The `Market` class is designed to hold a single pandas Series (datetime index) c
 Preconfigured model-builder functions can be found in `opti_dispatch.optimisation.arbitrage_models`. However constraint and objective rules are defined separately in `opti_dispatch.optimisation.rules` for use as building blocks in custom models.
 
 See `example_01.py` for a complete worked example covering data loading, model construction, solving, and result extraction.
+Reproducible results can be found in the example_results directory.
 
 ---
 
@@ -80,3 +81,7 @@ maximise Σ price[m,t] × dt × (discharge[m,t] − charge[m,t])
 ```
 
 over all markets `m` and timesteps `t`.
+
+### Analysis
+
+Some simple functions are provided in the `analysis` module to extract and post-process results for easy visualisation and validation.
