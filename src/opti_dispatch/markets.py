@@ -20,8 +20,17 @@ class Market:
             raise ValueError("Prices contains NaNs")
 
     def upsample(self, freq: pd.Timedelta) -> "Market":
-        resampled_prices = self.prices.resample(freq).ffill()
-        return Market(name=self.name, prices=resampled_prices, interval=self.interval)
+        # Extend time series so that final step is broken down rather than truncated
+        extended_index = self.prices.index.append(pd.DatetimeIndex([self.prices.index[-1] + self.interval]))
+        extended_prices = self.prices.reindex(extended_index)
+
+        # Resample with extended index
+        resampled = extended_prices.resample(freq).ffill()
+
+        # There will only be one extra timestep added which needs to be trimmed
+        resampled = resampled.iloc[:-1]
+
+        return Market(name=self.name, prices=resampled, interval=self.interval)
 
 # Assumes market time series have same start and end time
 def align_market_freqs(markets: list[Market])->tuple[list[Market], pd.Timedelta]:
