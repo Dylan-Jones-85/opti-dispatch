@@ -24,13 +24,19 @@ m2 = Market(name="M2", prices = market2_ts, interval = pd.Timedelta("1h"))
 # Align market frequencies for MILP DVs
 markets = [m1,m2]
 
-print("Building pyomo model...")
+print("Building arbitrage model...")
+### (Un)Comment to run MILP solver for two markets
 # Limit number of timesteps to solve for to allow quick local runs
-t_start = pd.Timestamp("2020-11-1")
-t_end = pd.Timestamp("2020-12-1")
-arb_model = build_MILP_arb_model(markets=markets, battery=battery, t_start=t_start, t_end=t_end)
+# t_start = pd.Timestamp("2020-6-1")
+# t_end = pd.Timestamp("2020-12-1")
+# time_index = m1.prices.loc[t_start:t_end].index
+# arb_model = build_MILP_arb_model(markets=markets, battery=battery, t_start=t_start, t_end=t_end)
 
-print("Solving pyomo model...")
+### (Un)Comment to run linear solver for single market
+time_index = m1.prices.index
+arb_model = build_linear_arb_model(markets=[m1], battery=battery)
+
+print("Solving arbitrage model...")
 solver = SolverFactory("highs")
 results = solver.solve(arb_model)
 
@@ -50,9 +56,9 @@ if results.solver.termination_condition == TerminationCondition.optimal:
     power_flow_violation = any(check_power_limits(arb_model))
     print(f"Simul charge and discharge check: {"FAILED" if power_flow_violation else "PASSED"}")
     
-    time_index = m1.prices.loc[t_start:t_end].index
     results_df = extract_results(arb_model, time_index)
-    results_df.drop(columns="z").tail(100).plot()
+    if "z" in results_df.columns:
+        results_df.drop(columns="z").tail(100).plot()
     cashflow_df = compute_cashflow_trace(arb_model, time_index)
     cashflow_df.cumsum().plot(ylabel="Cumulative cashflow (£)")
 
@@ -61,7 +67,7 @@ if results.solver.termination_condition == TerminationCondition.optimal:
     cost_model_match = np.isclose(calced_optimal_value, model_optimal_value, rtol=1e-6)
     print(f"Cost model consistency check: {"PASSED" if cost_model_match else "FAILED"}")
     
-    print(f"Total profit in {t_end-t_start} = £{model_optimal_value}")
+    print(f"Total profit in {cashflow_df.index[-1]-cashflow_df.index[0]} = £{model_optimal_value}")
 
 else:
     print(f"Optimisation failed with status {results.solver.termination_condition}")
